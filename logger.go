@@ -27,6 +27,7 @@ type Logger struct {
 	InfoLogger  *log.Logger
 	WarnLogger  *log.Logger
 	ErrorLogger *log.Logger
+	FatalLogger *log.Logger
 }
 
 func getEnvVarLevel(namespace string) string {
@@ -38,7 +39,7 @@ func getEnvVarLevel(namespace string) string {
 		namespace = strings.Replace(namespace, ".", "_", -1)
 	}
 
-	level = os.Getenv(prefix + namespace)
+	level := os.Getenv(prefix + namespace)
 	if level == "" {
 		level = os.Getenv(DefaultEnvironmentVariablePrefix)
 	}
@@ -92,6 +93,7 @@ func (this *Logger) SetLevel(level Level) {
 	this.InfoLogger = log.New(infoHandle, namespace+"[INFO] ", 0)
 	this.WarnLogger = log.New(warnHandle, namespace+"[WARN] ", 0)
 	this.ErrorLogger = log.New(os.Stderr, namespace+"[ERROR] ", 0)
+	this.FatalLogger = log.New(os.Stderr, namespace+"[FATAL] ", 0)
 }
 
 func (this *Logger) Debug(format string, v ...interface{}) {
@@ -108,6 +110,11 @@ func (this *Logger) Warn(format string, v ...interface{}) {
 
 func (this *Logger) Error(format string, v ...interface{}) {
 	this.ErrorLogger.Printf(format+"\n", v...)
+}
+
+func (this *Logger) Fatal(format string, v ...interface{}) {
+	this.FatalLogger.Printf(format+"\n", v...)
+	os.Exit(1)
 }
 
 func SetLevel(level Level) {
@@ -128,4 +135,8 @@ func Warn(format string, v ...interface{}) {
 
 func Error(format string, v ...interface{}) {
 	DefaultLogger.Error(format, v...)
+}
+
+func Fatal(format string, v ...interface{}) {
+	DefaultLogger.Fatal(format, v...)
 }
