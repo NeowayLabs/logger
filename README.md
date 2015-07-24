@@ -29,7 +29,7 @@ You can use environment variable to set level instead call ```SetLevel``` manual
 ```debug```, ```info```, ```warn``` and ```error```, this variable will set level to default namespace logger. To set
 only of specifc module you can export ```SEVERINO_LOGGER_MY_MODULE```, if you don't do that, the level of default will
 be used.
-**NOTE:** the module name will be replace "-" and "." to "_" and will be uppercase. If your module is: "vendor.my-module"
+**NOTE:** the module name will be replace "-" and "." to "\_" and will be uppercase. If your module is: "vendor.my-module"
 your environment variable will be "SEVERINO_LOGGER_VENDOR_MY_MODULE"
 
 Take a look at following examples:
