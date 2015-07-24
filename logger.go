@@ -8,6 +8,8 @@ import (
 	"strings"
 )
 
+const DefaultEnvironmentVariablePrefix = "SEVERINO_LOGGER"
+
 var DefaultLogger *Logger = Namespace("")
 
 type Level uint
@@ -28,7 +30,7 @@ type Logger struct {
 }
 
 func getEnvVarLevel(namespace string) string {
-	prefix := "SEVERINO_LOGGER"
+	prefix := DefaultEnvironmentVariablePrefix
 	if namespace != "" {
 		prefix += "_"
 		namespace = strings.ToUpper(namespace)
@@ -36,7 +38,12 @@ func getEnvVarLevel(namespace string) string {
 		namespace = strings.Replace(namespace, ".", "_", -1)
 	}
 
-	return strings.ToLower(os.Getenv(prefix + namespace))
+	level = os.Getenv(prefix + namespace)
+	if level == "" {
+		level = os.Getenv(DefaultEnvironmentVariablePrefix)
+	}
+
+	return strings.ToLower(level)
 }
 
 func getLevelByString(level string) Level {
