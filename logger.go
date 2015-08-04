@@ -1,34 +1,50 @@
 package logger
 
 import (
-	"io"
-	"io/ioutil"
-	"log"
+	"fmt"
 	"os"
 	"strings"
 )
 
-const DefaultEnvironmentVariablePrefix = "SEVERINO_LOGGER"
-
 var DefaultLogger *Logger = Namespace("")
 
-type Level uint
-
 const (
-	LevelDebug Level = iota
-	LevelInfo
+	DefaultEnvironmentVariablePrefix       = "SEVERINO_LOGGER"
+	LevelError                       Level = iota
 	LevelWarn
-	LevelError
+	LevelInfo
+	LevelDebug
 )
 
-type Logger struct {
-	Namespace   string
-	DebugLogger *log.Logger
-	InfoLogger  *log.Logger
-	WarnLogger  *log.Logger
-	ErrorLogger *log.Logger
-	FatalLogger *log.Logger
-}
+type (
+	Level           uint
+	LoggerInterface interface {
+	}
+	LoggerInitInterface interface {
+		Init(namespace string, level Level)
+	}
+	LoggerDebugInterface interface {
+		Debug(msg string)
+	}
+	LoggerInfoInterface interface {
+		Info(msg string)
+	}
+	LoggerWarnInterface interface {
+		Warn(msg string)
+	}
+	LoggerErrorInterface interface {
+		Error(msg string)
+	}
+	LoggerFatalInterface interface {
+		Fatal(msg string)
+	}
+
+	Logger struct {
+		Namespace string
+		Level     Level
+		Handlers  []LoggerInterface
+	}
+)
 
 func getEnvVarLevel(namespace string) string {
 	prefix := DefaultEnvironmentVariablePrefix
@@ -57,7 +73,7 @@ func getLevelByString(level string) Level {
 	} else if strings.EqualFold(level, "error") {
 		return LevelError
 	} else {
-		return LevelInfo
+		return LevelWarn
 	}
 }
 
@@ -66,55 +82,98 @@ func Namespace(namespace string) *Logger {
 		Namespace: namespace,
 	}
 
-	level := getEnvVarLevel(namespace)
-	logger.SetLevel(getLevelByString(level))
+	logger.SetLevel(getLevelByString(getEnvVarLevel(namespace)))
+	logger.AddHandler(&DefaultHandler{})
 
 	return logger
 }
 
-func (this *Logger) SetLevel(level Level) {
-	namespace := this.Namespace
-	if namespace != "" {
-		namespace = "<" + namespace + "> "
+func (logger *Logger) AddHandler(handler LoggerInterface) {
+	logger.Handlers = append(logger.Handlers, handler)
+
+	if initHandler, ok := handler.(LoggerInitInterface); ok {
+		initHandler.Init(logger.Namespace, logger.Level)
+	}
+}
+
+func (logger *Logger) SetLevel(level Level) {
+	logger.Level = level
+
+	for _, handler := range logger.Handlers {
+		if initHandler, ok := handler.(LoggerInitInterface); ok {
+			initHandler.Init(logger.Namespace, logger.Level)
+		}
+	}
+}
+
+func (logger *Logger) Debug(format string, v ...interface{}) {
+	if logger.Level < LevelDebug {
+		return
 	}
 
-	var debugHandle, infoHandle, warnHandle io.Writer
-	if level == LevelDebug {
-		debugHandle, infoHandle, warnHandle = os.Stdout, os.Stdout, os.Stdout
-	} else if level == LevelInfo {
-		debugHandle, infoHandle, warnHandle = ioutil.Discard, os.Stdout, os.Stdout
-	} else if level == LevelWarn {
-		debugHandle, infoHandle, warnHandle = ioutil.Discard, ioutil.Discard, os.Stdout
-	} else if level == LevelError {
-		debugHandle, infoHandle, warnHandle = ioutil.Discard, ioutil.Discard, ioutil.Discard
+	msg := fmt.Sprintf(format, v...)
+	for _, handler := range logger.Handlers {
+		if debugHandler, ok := handler.(LoggerDebugInterface); ok {
+			debugHandler.Debug(msg)
+		}
+	}
+}
+
+func (logger *Logger) Info(format string, v ...interface{}) {
+	if logger.Level < LevelInfo {
+		return
 	}
 
-	this.DebugLogger = log.New(debugHandle, namespace+"[DEBUG] ", 0)
-	this.InfoLogger = log.New(infoHandle, namespace+"[INFO] ", 0)
-	this.WarnLogger = log.New(warnHandle, namespace+"[WARN] ", 0)
-	this.ErrorLogger = log.New(os.Stderr, namespace+"[ERROR] ", 0)
-	this.FatalLogger = log.New(os.Stderr, namespace+"[FATAL] ", 0)
+	msg := fmt.Sprintf(format, v...)
+	for _, handler := range logger.Handlers {
+		if infoHandler, ok := handler.(LoggerInfoInterface); ok {
+			infoHandler.Info(msg)
+		}
+	}
 }
 
-func (this *Logger) Debug(format string, v ...interface{}) {
-	this.DebugLogger.Printf(format+"\n", v...)
+func (logger *Logger) Warn(format string, v ...interface{}) {
+	if logger.Level < LevelWarn {
+		return
+	}
+
+	msg := fmt.Sprintf(format, v...)
+	for _, handler := range logger.Handlers {
+		if warnHandler, ok := handler.(LoggerWarnInterface); ok {
+			warnHandler.Warn(msg)
+		}
+	}
 }
 
-func (this *Logger) Info(format string, v ...interface{}) {
-	this.InfoLogger.Printf(format+"\n", v...)
+func (logger *Logger) Error(format string, v ...interface{}) {
+	if logger.Level < LevelError {
+		return
+	}
+
+	msg := fmt.Sprintf(format, v...)
+	for _, handler := range logger.Handlers {
+		if errorHandler, ok := handler.(LoggerErrorInterface); ok {
+			errorHandler.Error(msg)
+		}
+	}
 }
 
-func (this *Logger) Warn(format string, v ...interface{}) {
-	this.WarnLogger.Printf(format+"\n", v...)
-}
+func (logger *Logger) Fatal(format string, v ...interface{}) {
+	if logger.Level < LevelError {
+		return
+	}
 
-func (this *Logger) Error(format string, v ...interface{}) {
-	this.ErrorLogger.Printf(format+"\n", v...)
-}
-
-func (this *Logger) Fatal(format string, v ...interface{}) {
-	this.FatalLogger.Printf(format+"\n", v...)
+	msg := fmt.Sprintf(format, v...)
+	for _, handler := range logger.Handlers {
+		if fatalHandler, ok := handler.(LoggerFatalInterface); ok {
+			fatalHandler.Fatal(msg)
+		}
+	}
 	os.Exit(1)
+}
+
+func AddHandler(handler LoggerInterface) {
+	DefaultLogger.AddHandler(handler)
 }
 
 func SetLevel(level Level) {
