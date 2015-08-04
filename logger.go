@@ -6,35 +6,45 @@ import (
 	"strings"
 )
 
-var DefaultLogger *Logger = Namespace("")
+// DefaultLogger default logger
+var DefaultLogger = Namespace("")
+
+// DefaultEnvironmentVariablePrefix default environment variable prefix
+const DefaultEnvironmentVariablePrefix = "SEVERINO_LOGGER"
 
 const (
-	DefaultEnvironmentVariablePrefix       = "SEVERINO_LOGGER"
-	LevelError                       Level = iota
+	LevelError Level = iota
 	LevelWarn
 	LevelInfo
 	LevelDebug
 )
 
 type (
-	Level           uint
+	Level uint
+	// LoggerInterface ...
 	LoggerInterface interface {
 	}
+	// LoggerInitInterface ...
 	LoggerInitInterface interface {
 		Init(namespace string, level Level)
 	}
+	// LoggerDebugInterface ...
 	LoggerDebugInterface interface {
 		Debug(msg string)
 	}
+	// LoggerInfoInterface ...
 	LoggerInfoInterface interface {
 		Info(msg string)
 	}
+	// LoggerWarnInterface ...
 	LoggerWarnInterface interface {
 		Warn(msg string)
 	}
+	// LoggerErrorInterface ...
 	LoggerErrorInterface interface {
 		Error(msg string)
 	}
+	// LoggerFatalInterface ...
 	LoggerFatalInterface interface {
 		Fatal(msg string)
 	}
@@ -77,6 +87,7 @@ func getLevelByString(level string) Level {
 	}
 }
 
+// Namespace create a new logger namespace (new instance of logger)
 func Namespace(namespace string) *Logger {
 	logger := &Logger{
 		Namespace: namespace,

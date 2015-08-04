@@ -2,10 +2,10 @@
 
 This package can help you add some log to your application. We have four different levels of log, **Debug**, **Info**,
 **Warn** and **Error**, by default Debug will be *discarded*, Info and Warn will be redirect to *Stdout* and Error will
-be redirect to *Stderr*. **Note** Error Level will always be redirect to Stderr, and you can disable that.
+be redirect to *Stderr*. **Note** Error Level will always be redirect to Stderr, and you cannot disable that.
 
-This module have a default logger instance with empty Namespace to make easy you use it without any additional line, like we
-show below
+This module have a default logger instance with empty Namespace to make easy you use it without any additional line,
+like we show below
 ```
 package main
 
@@ -61,3 +61,16 @@ func main() {
     log.Warn("number=%d string=%s...", 8, "test warn")    // [WARN] number=8 string=test warn...
 }
 ```
+### Use new handlers
+
+You can create new handler to log in the different ways, you can implement log handler to send any kind of
+alert, like send an email when error occour, or write warn to file. To do that you need implement at least of following
+interface.
+
+* [Debug Interface]()
+* [Info Interface]()
+* [Warn Interface]()
+* [Error Interface]()
+* [Fatal Interface]()
+* [Init Interface]() this function will be called when you add your handler to logger instance and always ```setLevel```
+was called
