@@ -65,12 +65,12 @@ func main() {
 
 You can create new handler to log in the different ways, you can implement log handler to send any kind of
 alert, like send an email when error occour, or write warn to file. To do that you need implement at least of following
-interface.
+interface. An example of implementation take a look at [default handler](http://gitlab.neoway.com.br/severino/logger/blob/master/handler.go)
 
-* [Debug Interface]()
-* [Info Interface]()
-* [Warn Interface]()
-* [Error Interface]()
-* [Fatal Interface]()
-* [Init Interface]() this function will be called when you add your handler to logger instance and always ```setLevel```
-was called
+* [Debug Interface](http://gitlab.neoway.com.br/severino/logger/blob/master/logger.go#L33)
+* [Info Interface](http://gitlab.neoway.com.br/severino/logger/blob/master/logger.go#L37)
+* [Warn Interface](http://gitlab.neoway.com.br/severino/logger/blob/master/logger.go#L41)
+* [Error Interface](http://gitlab.neoway.com.br/severino/logger/blob/master/logger.go#L45)
+* [Fatal Interface](http://gitlab.neoway.com.br/severino/logger/blob/master/logger.go#L49)
+* [Init Interface](http://gitlab.neoway.com.br/severino/logger/blob/master/logger.go#L29) this function will be called
+when you add your handler to logger instance and always ```setLevel``` was called
