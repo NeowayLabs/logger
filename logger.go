@@ -183,6 +183,11 @@ func (logger *Logger) Fatal(format string, v ...interface{}) {
 	os.Exit(1)
 }
 
+func (logger *Logger) Write(b []byte) (int, error) {
+	logger.Debug("%s", strings.TrimRight(string(b), "\n"))
+	return len(b), nil
+}
+
 func AddHandler(handler LoggerInterface) {
 	DefaultLogger.AddHandler(handler)
 }
