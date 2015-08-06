@@ -83,7 +83,7 @@ func getLevelByString(level string) Level {
 	} else if strings.EqualFold(level, "error") {
 		return LevelError
 	} else {
-		return LevelWarn
+		return LevelInfo
 	}
 }
 
