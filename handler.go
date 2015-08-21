@@ -25,7 +25,7 @@ func (handler *DefaultHandler) Init(namespace string, level Level) {
 	var debugOutput, infoOutput, warnOutput io.Writer
 	if level == LevelDebug {
 		debugOutput, infoOutput, warnOutput = os.Stdout, os.Stdout, os.Stdout
-	} else if level == LevelDebug {
+	} else if level == LevelInfo {
 		debugOutput = ioutil.Discard
 		infoOutput, warnOutput = os.Stdout, os.Stdout
 	} else {
