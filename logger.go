@@ -73,7 +73,7 @@ func getEnvVarLevel(namespace string) string {
 	return strings.ToLower(level)
 }
 
-func getLevelByString(level string) Level {
+func GetLevelByString(level string) Level {
 	if strings.EqualFold(level, "debug") {
 		return LevelDebug
 	} else if strings.EqualFold(level, "info") {
@@ -93,7 +93,7 @@ func Namespace(namespace string) *Logger {
 		Namespace: namespace,
 	}
 
-	logger.SetLevel(getLevelByString(getEnvVarLevel(namespace)))
+	logger.SetLevel(GetLevelByString(getEnvVarLevel(namespace)))
 	logger.AddHandler(&DefaultHandler{})
 
 	return logger
