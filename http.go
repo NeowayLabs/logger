@@ -7,8 +7,6 @@ import (
 	"strings"
 )
 
-var httpLogger = Namespace("HTTP")
-
 func levelToString(level Level) string {
 	if level == LevelDebug {
 		return "debug"
