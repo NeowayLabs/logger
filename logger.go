@@ -8,6 +8,7 @@ import (
 
 // DefaultLogger default logger
 var DefaultLogger = Namespace("")
+var loggers = map[string]*Logger{}
 
 // DefaultEnvironmentVariablePrefix default environment variable prefix
 const DefaultEnvironmentVariablePrefix = "SEVERINO_LOGGER"
@@ -96,12 +97,19 @@ func GetLevelByString(level string) Level {
 
 // Namespace create a new logger namespace (new instance of logger)
 func Namespace(namespace string) *Logger {
+	namespaceLower := strings.ToLower(namespace)
+	if logger, ok := loggers[namespaceLower]; ok {
+		return logger
+	}
+
 	logger := &Logger{
 		Namespace: namespace,
 	}
 
 	logger.SetLevel(GetLevelByString(getEnvVarLevel(namespace)))
 	logger.AddHandler(&DefaultHandler{})
+
+	loggers[namespaceLower] = logger
 
 	return logger
 }
