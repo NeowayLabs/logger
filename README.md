@@ -53,19 +53,21 @@ func main() {
     // getting new instance with namespace
     log := logger.Namespace("my-module")
     log.Debug("number=%d string=%s...", 12, "test debug") // default debug is discarded
-    log.Warn("number=%d string=%s...", 8, "test warn")    // [WARN] number=8 string=test warn...
+    log.Warn("number=%d string=%s...", 8, "test warn")    // <my-module> [WARN] number=8 string=test warn...
 
     // set level to show debug
     log.SetLevel(logger.LevelDebug)
-    log.Debug("number=%d string=%s...", 12, "test debug") // [DEBUG] number=12 string=test debug...
-    log.Warn("number=%d string=%s...", 8, "test warn")    // [WARN] number=8 string=test warn...
+    log.Debug("number=%d string=%s...", 12, "test debug") // <my-module> [DEBUG] number=12 string=test debug...
+    log.Warn("number=%d string=%s...", 8, "test warn")    // <my-module> [WARN] number=8 string=test warn...
 }
 ```
+
 ### Use new handlers
 
 You can create new handler to log in the different ways, you can implement log handler to send any kind of
-alert, like send an email when error occour, or write warn to file. To do that you need implement at least of following
-interface. An example of implementation take a look at [default handler](http://github.com/NeowayLabs/logger/blob/master/handler.go)
+alert, like send an email when error occour, or write warns to file. To do that you need implement at least of following
+interface.
+An example of our default implementation you found [here](http://github.com/NeowayLabs/logger/blob/master/handler.go)
 
 * [Debug Interface](http://github.com/NeowayLabs/logger/blob/master/logger.go#L33)
 * [Info Interface](http://github.com/NeowayLabs/logger/blob/master/logger.go#L37)
@@ -74,3 +76,46 @@ interface. An example of implementation take a look at [default handler](http://
 * [Fatal Interface](http://github.com/NeowayLabs/logger/blob/master/logger.go#L49)
 * [Init Interface](http://github.com/NeowayLabs/logger/blob/master/logger.go#L29) this function will be called
 when you add your handler to logger instance and always ```setLevel``` was called
+
+
+### HTTP handler
+
+To avoid you have to restart your app to change level of your logger, we develop a HTTP Handler to you control all
+the levels of your app, we have an usage example:
+
+```
+package main
+
+import (
+    "net/http"
+
+    "github.com/NeowayLabs/logger"
+)
+
+func main() {
+    log := logger.Namespace("TEST")
+
+    http.Handle("/logger/", logger.HTTPHandler()) // handle /logger/NAMESPACE
+    http.Handle("/logger", logger.HTTPHandler()) // handle /logger
+    err := http.ListenAndServe(":8080", nil)
+    if err != nil {
+        log.Fatal("ListenAndServe: ", err)
+    }
+}
+```
+
+* You can get the list of all namespaces and its levels (key _default_ is the empty namespace, default one)
+```
+curl http://localhost:8080/logger
+```
+
+* You can get the level of a specific namespace
+```
+curl http://localhost:8080/logger/my-module
+```
+
+* You can set the level of a specific namespace
+```
+curl -XPUT http://localhost:8080/logger --data '{"level": "debug"}' # set level of default namespace (empty)
+curl -XPUT http://localhost:8080/logger/my-module --data '{"level": "warn"}' # set level of my-module namespace (empty)
+```
