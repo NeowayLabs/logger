@@ -27,31 +27,31 @@ const (
 type (
 	// Level ...
 	Level uint
-	// LoggerInterface ...
-	LoggerInterface interface {
+	// Interface ...
+	Interface interface {
 	}
-	// LoggerInitInterface ...
-	LoggerInitInterface interface {
+	// InitInterface ...
+	InitInterface interface {
 		Init(namespace string, level Level)
 	}
-	// LoggerDebugInterface ...
-	LoggerDebugInterface interface {
+	// DebugInterface ...
+	DebugInterface interface {
 		Debug(msg string)
 	}
-	// LoggerInfoInterface ...
-	LoggerInfoInterface interface {
+	// InfoInterface ...
+	InfoInterface interface {
 		Info(msg string)
 	}
-	// LoggerWarnInterface ...
-	LoggerWarnInterface interface {
+	// WarnInterface ...
+	WarnInterface interface {
 		Warn(msg string)
 	}
-	// LoggerErrorInterface ...
-	LoggerErrorInterface interface {
+	// ErrorInterface ...
+	ErrorInterface interface {
 		Error(msg string)
 	}
-	// LoggerFatalInterface ...
-	LoggerFatalInterface interface {
+	// FatalInterface ...
+	FatalInterface interface {
 		Fatal(msg string)
 	}
 
@@ -59,7 +59,7 @@ type (
 	Logger struct {
 		Namespace string
 		Level     Level
-		Handlers  []LoggerInterface
+		Handlers  []Interface
 	}
 )
 
@@ -114,10 +114,11 @@ func Namespace(namespace string) *Logger {
 	return logger
 }
 
-func (logger *Logger) AddHandler(handler LoggerInterface) {
+// AddHandler ...
+func (logger *Logger) AddHandler(handler Interface) {
 	logger.Handlers = append(logger.Handlers, handler)
 
-	if initHandler, ok := handler.(LoggerInitInterface); ok {
+	if initHandler, ok := handler.(InitInterface); ok {
 		initHandler.Init(logger.Namespace, logger.Level)
 	}
 }
@@ -127,7 +128,7 @@ func (logger *Logger) SetLevel(level Level) {
 	logger.Level = level
 
 	for _, handler := range logger.Handlers {
-		if initHandler, ok := handler.(LoggerInitInterface); ok {
+		if initHandler, ok := handler.(InitInterface); ok {
 			initHandler.Init(logger.Namespace, logger.Level)
 		}
 	}
@@ -183,7 +184,7 @@ func (logger *Logger) Error(format string, v ...interface{}) {
 
 	msg := fmt.Sprintf(format, v...)
 	for _, handler := range logger.Handlers {
-		if errorHandler, ok := handler.(LoggerErrorInterface); ok {
+		if errorHandler, ok := handler.(ErrorInterface); ok {
 			errorHandler.Error(msg)
 		}
 	}
@@ -197,7 +198,7 @@ func (logger *Logger) Fatal(format string, v ...interface{}) {
 
 	msg := fmt.Sprintf(format, v...)
 	for _, handler := range logger.Handlers {
-		if fatalHandler, ok := handler.(LoggerFatalInterface); ok {
+		if fatalHandler, ok := handler.(FatalInterface); ok {
 			fatalHandler.Fatal(msg)
 		}
 	}
@@ -210,7 +211,8 @@ func (logger *Logger) Write(b []byte) (int, error) {
 	return len(b), nil
 }
 
-func AddHandler(handler LoggerInterface) {
+// AddHandler ...
+func AddHandler(handler Interface) {
 	DefaultLogger.AddHandler(handler)
 }
 
