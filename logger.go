@@ -13,13 +13,18 @@ var DefaultLogger = Namespace("")
 const DefaultEnvironmentVariablePrefix = "SEVERINO_LOGGER"
 
 const (
+	// LevelError ...
 	LevelError Level = iota
+	// LevelWarn ...
 	LevelWarn
+	// LevelInfo ...
 	LevelInfo
+	// LevelDebug ...
 	LevelDebug
 )
 
 type (
+	// Level ...
 	Level uint
 	// LoggerInterface ...
 	LoggerInterface interface {
@@ -49,6 +54,7 @@ type (
 		Fatal(msg string)
 	}
 
+	// Logger ...
 	Logger struct {
 		Namespace string
 		Level     Level
@@ -73,6 +79,7 @@ func getEnvVarLevel(namespace string) string {
 	return strings.ToLower(level)
 }
 
+// GetLevelByString ...
 func GetLevelByString(level string) Level {
 	if strings.EqualFold(level, "debug") {
 		return LevelDebug
@@ -107,6 +114,7 @@ func (logger *Logger) AddHandler(handler LoggerInterface) {
 	}
 }
 
+// SetLevel ...
 func (logger *Logger) SetLevel(level Level) {
 	logger.Level = level
 
@@ -117,6 +125,7 @@ func (logger *Logger) SetLevel(level Level) {
 	}
 }
 
+// Debug ...
 func (logger *Logger) Debug(format string, v ...interface{}) {
 	if logger.Level < LevelDebug {
 		return
@@ -124,12 +133,13 @@ func (logger *Logger) Debug(format string, v ...interface{}) {
 
 	msg := fmt.Sprintf(format, v...)
 	for _, handler := range logger.Handlers {
-		if debugHandler, ok := handler.(LoggerDebugInterface); ok {
+		if debugHandler, ok := handler.(DebugInterface); ok {
 			debugHandler.Debug(msg)
 		}
 	}
 }
 
+// Info ...
 func (logger *Logger) Info(format string, v ...interface{}) {
 	if logger.Level < LevelInfo {
 		return
@@ -137,12 +147,13 @@ func (logger *Logger) Info(format string, v ...interface{}) {
 
 	msg := fmt.Sprintf(format, v...)
 	for _, handler := range logger.Handlers {
-		if infoHandler, ok := handler.(LoggerInfoInterface); ok {
+		if infoHandler, ok := handler.(InfoInterface); ok {
 			infoHandler.Info(msg)
 		}
 	}
 }
 
+// Warn ...
 func (logger *Logger) Warn(format string, v ...interface{}) {
 	if logger.Level < LevelWarn {
 		return
@@ -150,12 +161,13 @@ func (logger *Logger) Warn(format string, v ...interface{}) {
 
 	msg := fmt.Sprintf(format, v...)
 	for _, handler := range logger.Handlers {
-		if warnHandler, ok := handler.(LoggerWarnInterface); ok {
+		if warnHandler, ok := handler.(WarnInterface); ok {
 			warnHandler.Warn(msg)
 		}
 	}
 }
 
+// Error ...
 func (logger *Logger) Error(format string, v ...interface{}) {
 	if logger.Level < LevelError {
 		return
@@ -169,6 +181,7 @@ func (logger *Logger) Error(format string, v ...interface{}) {
 	}
 }
 
+// Fatal ...
 func (logger *Logger) Fatal(format string, v ...interface{}) {
 	if logger.Level < LevelError {
 		return
@@ -183,6 +196,7 @@ func (logger *Logger) Fatal(format string, v ...interface{}) {
 	os.Exit(1)
 }
 
+// Write ...
 func (logger *Logger) Write(b []byte) (int, error) {
 	logger.Debug("%s", strings.TrimRight(string(b), "\n"))
 	return len(b), nil
@@ -192,26 +206,32 @@ func AddHandler(handler LoggerInterface) {
 	DefaultLogger.AddHandler(handler)
 }
 
+// SetLevel ...
 func SetLevel(level Level) {
 	DefaultLogger.SetLevel(level)
 }
 
+// Debug ...
 func Debug(format string, v ...interface{}) {
 	DefaultLogger.Debug(format, v...)
 }
 
+// Info ...
 func Info(format string, v ...interface{}) {
 	DefaultLogger.Info(format, v...)
 }
 
+// Warn ...
 func Warn(format string, v ...interface{}) {
 	DefaultLogger.Warn(format, v...)
 }
 
+// Error ...
 func Error(format string, v ...interface{}) {
 	DefaultLogger.Error(format, v...)
 }
 
+// Fatal ...
 func Fatal(format string, v ...interface{}) {
 	DefaultLogger.Fatal(format, v...)
 }
