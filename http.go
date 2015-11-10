@@ -78,8 +78,12 @@ func HTTPFunc(w http.ResponseWriter, r *http.Request) {
 		level := GetLevelByString(userLevel["level"].(string))
 		if logger, ok := loggers[namespace]; ok {
 			logger.SetLevel(level)
-		} else {
+		} else if namespace == "" {
 			DefaultLogger.SetLevel(level)
+		} else {
+			w.WriteHeader(http.StatusBadRequest)
+			io.WriteString(w, http.StatusText(http.StatusBadRequest))
+			return
 		}
 
 		w.WriteHeader(http.StatusOK)
