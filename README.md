@@ -111,11 +111,12 @@ curl http://localhost:8080/logger
 
 * You can get the level of a specific namespace
 ```
-curl http://localhost:8080/logger/my-module
+curl http://localhost:8080/logger/test
 ```
 
 * You can set the level of a specific namespace
 ```
-curl -XPUT http://localhost:8080/logger --data '{"level": "debug"}' # set level of default namespace (empty)
-curl -XPUT http://localhost:8080/logger/my-module --data '{"level": "warn"}' # set level of my-module namespace (empty)
+curl -XPUT http://localhost:8080/logger --data '{"namespace": "", "level": "debug"}' # set level of default namespace (empty)
+curl -XPUT http://localhost:8080/logger --data '{"namespace": "test", "level": "debug"}' # set level of test namespace
+curl -XPUT http://localhost:8080/logger/test --data '{"level": "warn"}' # set level of test namespace
 ```
