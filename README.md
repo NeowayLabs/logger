@@ -120,3 +120,8 @@ curl -XPUT http://localhost:8080/logger --data '{"namespace": "", "level": "debu
 curl -XPUT http://localhost:8080/logger --data '{"namespace": "test", "level": "debug"}' # set level of test namespace
 curl -XPUT http://localhost:8080/logger/test --data '{"level": "warn"}' # set level of test namespace
 ```
+
+* You can set the level of all namespaces
+```
+curl -XPUT http://localhost:8080/logger/all --data '{"level": "debug"}' # set level of all namespaces
+```
