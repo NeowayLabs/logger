@@ -92,7 +92,11 @@ func HTTPFunc(w http.ResponseWriter, r *http.Request) {
 		}
 
 		level := GetLevelByString(userLevel["level"].(string))
-		if logger, ok := loggers[namespace]; ok {
+		if namespace == "all" {
+			for _, logger := range loggers {
+				logger.SetLevel(level)
+			}
+		} else if logger, ok := loggers[namespace]; ok {
 			logger.SetLevel(level)
 		} else if namespace == "" {
 			DefaultLogger.SetLevel(level)
@@ -100,7 +104,6 @@ func HTTPFunc(w http.ResponseWriter, r *http.Request) {
 			http.Error(w, fmt.Sprintf("namespace '%s' not found", namespace), http.StatusNotFound)
 			return
 		}
-
 		w.WriteHeader(http.StatusOK)
 		io.WriteString(w, http.StatusText(http.StatusOK))
 
