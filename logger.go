@@ -11,7 +11,7 @@ var DefaultLogger = Namespace("")
 var loggers = map[string]*Logger{}
 
 // DefaultEnvironmentVariablePrefix default environment variable prefix
-const DefaultEnvironmentVariablePrefix = "SEVERINO_LOGGER"
+var DefaultEnvironmentVariablePrefix = "SEVERINO_LOGGER"
 
 const (
 	// LevelError ...
