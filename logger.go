@@ -14,8 +14,10 @@ var loggers = map[string]*Logger{}
 var DefaultEnvironmentVariablePrefix = "SEVERINO_LOGGER"
 
 const (
+	// LevelNone ...
+	LevelNone Level = iota
 	// LevelError ...
-	LevelError Level = iota
+	LevelError
 	// LevelWarn ...
 	LevelWarn
 	// LevelInfo ...
@@ -90,6 +92,8 @@ func GetLevelByString(level string) Level {
 		return LevelWarn
 	} else if strings.EqualFold(level, "error") {
 		return LevelError
+	} else if strings.EqualFold(level, "none") {
+		return LevelNone
 	} else {
 		return LevelInfo
 	}
