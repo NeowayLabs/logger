@@ -211,7 +211,7 @@ func (logger *Logger) Fatal(format string, v ...interface{}) {
 
 // Write ...
 func (logger *Logger) Write(b []byte) (int, error) {
-	logger.Debug("%s", strings.TrimRight(string(b), "\n"))
+	logger.Info("%s", strings.TrimRight(string(b), "\n"))
 	return len(b), nil
 }
 
