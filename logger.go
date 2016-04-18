@@ -1,6 +1,7 @@
 package logger
 
 import (
+	"errors"
 	"fmt"
 	"os"
 	"strings"
@@ -10,8 +11,8 @@ import (
 var DefaultLogger = Namespace("")
 var loggers = map[string]*Logger{}
 
-// DefaultEnvironmentVariablePrefix default environment variable prefix
-var DefaultEnvironmentVariablePrefix = "SEVERINO_LOGGER"
+// defaultEnvironmentVariablePrefix default environment variable prefix
+var defaultEnvironmentVariablePrefix = "SEVERINO_LOGGER"
 
 const (
 	// LevelNone ...
@@ -66,7 +67,7 @@ type (
 )
 
 func getEnvVarLevel(namespace string) string {
-	prefix := DefaultEnvironmentVariablePrefix
+	prefix := defaultEnvironmentVariablePrefix
 	if namespace != "" {
 		prefix += "_"
 		namespace = strings.ToUpper(namespace)
@@ -76,10 +77,29 @@ func getEnvVarLevel(namespace string) string {
 
 	level := os.Getenv(prefix + namespace)
 	if level == "" {
-		level = os.Getenv(DefaultEnvironmentVariablePrefix)
+		level = os.Getenv(defaultEnvironmentVariablePrefix)
 	}
 
 	return strings.ToLower(level)
+}
+
+func SetDefaultEnvironmentVariablePrefix(prefix string) error {
+	for namespace := range loggers {
+		if namespace != "" {
+			return errors.New("Cannot change prefix because some logs have already been use")
+		}
+	}
+
+	delete(loggers, "")
+
+	defaultEnvironmentVariablePrefix = prefix
+	DefaultLogger = Namespace("")
+
+	return nil
+}
+
+func GetDefaultEnvironmentVariablePrefix() string {
+	return defaultEnvironmentVariablePrefix
 }
 
 // GetLevelByString ...
