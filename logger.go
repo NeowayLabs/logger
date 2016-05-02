@@ -11,6 +11,7 @@ import (
 // DefaultLogger default logger
 var DefaultLogger = Namespace("")
 var loggers = map[string]*Logger{}
+var loggersLock sync.Mutex
 
 // defaultEnvironmentVariablePrefix default environment variable prefix
 var defaultEnvironmentVariablePrefix = "SEVERINO_LOGGER"
@@ -85,6 +86,9 @@ func getEnvVarLevel(namespace string) string {
 }
 
 func SetDefaultEnvironmentVariablePrefix(prefix string) error {
+	loggersLock.Lock()
+	defer loggersLock.Unlock()
+
 	for namespace := range loggers {
 		if namespace != "" {
 			return errors.New("Cannot change prefix because some logs have already been use")
@@ -120,12 +124,10 @@ func GetLevelByString(level string) Level {
 	}
 }
 
-var namespaceLock sync.Mutex
-
 // Namespace create a new logger namespace (new instance of logger)
 func Namespace(namespace string) *Logger {
-	namespaceLock.Lock()
-	defer namespaceLock.Unlock()
+	loggersLock.Lock()
+	defer loggersLock.Unlock()
 	namespaceLower := strings.ToLower(namespace)
 	if logger, ok := loggers[namespaceLower]; ok {
 		return logger
