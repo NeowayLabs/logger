@@ -85,7 +85,7 @@ func getEnvVarLevel(namespace string) string {
 	return strings.ToLower(level)
 }
 
-func SetDefaultEnvironmentVariablePrefix(prefix string) error {
+func setEnvironmentVariablePrefix(prefix string) error {
 	loggersLock.Lock()
 	defer loggersLock.Unlock()
 
@@ -96,8 +96,15 @@ func SetDefaultEnvironmentVariablePrefix(prefix string) error {
 	}
 
 	delete(loggers, "")
-
 	defaultEnvironmentVariablePrefix = prefix
+
+	return nil
+}
+
+func SetDefaultEnvironmentVariablePrefix(prefix string) error {
+	if err := setEnvironmentVariablePrefix(prefix); err != nil {
+		return err
+	}
 	DefaultLogger = Namespace("")
 
 	return nil
