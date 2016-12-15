@@ -1,5 +1,3 @@
-//+build ignore
-
 package logger
 
 import (
@@ -12,7 +10,12 @@ import (
 func TestShouldChangeAllNamespacesLevel(t *testing.T) {
 	firstNamespace := Namespace("control")
 	secondNamespace := Namespace("module")
-	var jsonStr = []byte(`{"level":"debug"}`)
+
+    if firstNamespace.Level != 3 || secondNamespace.Level != 3 {
+        t.Fatal("Level should be Info, but got", firstNamespace.Level, secondNamespace.Level)
+    }
+
+    var jsonStr = []byte(`{"level":"debug"}`)
 	url := "http://testeurl.com/logger/all"
 
 	req, _ := http.NewRequest("PUT", url, bytes.NewBuffer(jsonStr))
@@ -21,7 +24,7 @@ func TestShouldChangeAllNamespacesLevel(t *testing.T) {
 
 	HTTPFunc(w, req)
 
-	if firstNamespace.Level != 3 || secondNamespace.Level != 3 {
-		t.Fatal("Level should be", jsonStr, "But got", firstNamespace.Level, secondNamespace.Level)
+	if firstNamespace.Level != 4 || secondNamespace.Level != 4 {
+		t.Fatal("Level should be", string(jsonStr), ", but got", firstNamespace.Level, secondNamespace.Level)
 	}
 }
