@@ -1,6 +1,7 @@
 # Logger
 
 [![Build Status](https://travis-ci.org/NeowayLabs/logger.svg?branch=master)](https://travis-ci.org/NeowayLabs/logger)
+[![codecov](https://codecov.io/gh/NeowayLabs/logger/branch/master/graph/badge.svg)](https://codecov.io/gh/NeowayLabs/logger)
 
 This package can help you add some log to your application. We have four different levels of log, **Debug**, **Info**,
 **Warn** and **Error**, by default Debug will be *discarded*, Info and Warn will be redirect to *Stdout* and Error will
