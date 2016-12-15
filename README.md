@@ -1,5 +1,7 @@
 # Logger
 
+[![Build Status](https://travis-ci.org/NeowayLabs/logger.svg?branch=master)](https://travis-ci.org/NeowayLabs/logger)
+
 This package can help you add some log to your application. We have four different levels of log, **Debug**, **Info**,
 **Warn** and **Error**, by default Debug will be *discarded*, Info and Warn will be redirect to *Stdout* and Error will
 be redirect to *Stderr*. **Note** Error Level will always be redirect to Stderr, and you cannot disable that.
