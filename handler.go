@@ -60,15 +60,20 @@ func (handler *DefaultHandler) turnOnLogging(namespace string, level Level, sysL
 	debugOutput := ioutil.Discard
 	infoOutput := ioutil.Discard
 	warnOutput := ioutil.Discard
-	errorOutput := os.Stderr
+	errorOutput := ioutil.Discard
 
 	switch level {
 	case LevelDebug:
 		debugOutput, infoOutput, warnOutput = os.Stdout, os.Stdout, os.Stdout
+		errorOutput = os.Stderr
 	case LevelInfo:
 		infoOutput, warnOutput = os.Stdout, os.Stdout
+		errorOutput = os.Stderr
 	case LevelWarn:
 		warnOutput = os.Stdout
+		errorOutput = os.Stderr
+	case LevelError:
+		errorOutput = os.Stderr
 	}
 
 	if sysLogHandle != nil {
