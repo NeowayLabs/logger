@@ -6,6 +6,7 @@ import (
 	"log"
 	"log/syslog"
 	"os"
+	"strings"
 )
 
 // Logger provides support to write to log files.
@@ -30,13 +31,10 @@ func (handler *DefaultHandler) Init(namespace string, level Level) {
 	handler.turnOnLogging(namespace, level, nil)
 }
 
-func (handler *DefaultHandler) InitSysLog(namespace, network, address string, level Level) {
-	tagProgram := ""
-	if namespace != "" {
-		tagProgram = `"program": "` + namespace + `"`
-	}
-
+func (handler *DefaultHandler) InitSysLog(namespace, address string, level Level) {
 	var sysLogLevel syslog.Priority
+	network := "udp"
+
 	switch level {
 	case LevelDebug:
 		sysLogLevel = syslog.LOG_DEBUG
@@ -48,7 +46,13 @@ func (handler *DefaultHandler) InitSysLog(namespace, network, address string, le
 		sysLogLevel = syslog.LOG_ERR
 	}
 
-	sysLogHandle, err := syslog.Dial(network, address, sysLogLevel, tagProgram)
+	addressSplit := strings.Split(address, "/")
+	address = addressSplit[0]
+	if len(addressSplit) == 2 {
+		network = addressSplit[1]
+	}
+
+	sysLogHandle, err := syslog.Dial(network, address, sysLogLevel, namespace)
 	if err != nil {
 		log.Fatal("error")
 	}
@@ -98,11 +102,11 @@ func (handler *DefaultHandler) turnOnLogging(namespace string, level Level, sysL
 		namespace = "<" + namespace + "> "
 	}
 
-	handler.DebugLogger = log.New(debugOutput, namespace+"[DEBUG] ", log.Ldate|log.Ltime|log.Lshortfile)
-	handler.InfoLogger = log.New(infoOutput, namespace+"[INFO] ", log.Ldate|log.Ltime|log.Lshortfile)
-	handler.WarnLogger = log.New(warnOutput, namespace+"[WARN] ", log.Ldate|log.Ltime|log.Lshortfile)
-	handler.ErrorLogger = log.New(errorOutput, namespace+"[ERROR] ", log.Ldate|log.Ltime|log.Lshortfile)
-	handler.FatalLogger = log.New(errorOutput, namespace+"[FATAL] ", log.Ldate|log.Ltime|log.Lshortfile)
+	handler.DebugLogger = log.New(debugOutput, namespace+"[DEBUG] ", 0)
+	handler.InfoLogger = log.New(infoOutput, namespace+"[INFO] ", 0)
+	handler.WarnLogger = log.New(warnOutput, namespace+"[WARN] ", 0)
+	handler.ErrorLogger = log.New(errorOutput, namespace+"[ERROR] ", 0)
+	handler.FatalLogger = log.New(errorOutput, namespace+"[FATAL] ", 0)
 }
 
 func (handler *DefaultHandler) Debug(msg string) {

@@ -16,7 +16,6 @@ var loggersLock sync.Mutex
 // defaultEnvironmentVariablePrefix default environment variable prefix
 var defaultEnvironmentVariablePrefix = "SEVERINO_LOGGER"
 var defaultEnvironmentVariablePrefixOutput = "LOGGER_OUTPUT"
-var defaultEnvironmentVariablePrefixSysLogNetwork = "LOGGER_SYSLOG_NETWORK"
 var defaultEnvironmentVariablePrefixSysLogAddress = "LOGGER_SYSLOG_ADDRESS"
 
 const (
@@ -34,11 +33,11 @@ const (
 
 	// LevelDebug logs everything
 	LevelDebug
-)
 
-const (
+	// Output stdout
 	StdOut Output = iota
 
+	// Output syslog
 	SysLog
 )
 
@@ -56,7 +55,7 @@ type (
 	// InitInterface ...
 	InitInterface interface {
 		Init(namespace string, level Level)
-		InitSysLog(namespace, network, address string, level Level)
+		InitSysLog(namespace, address string, level Level)
 	}
 
 	// DebugInterface ...
@@ -91,7 +90,6 @@ type (
 		Handlers      []Interface
 		Output        Output
 		SysLogAddress string
-		SysLogNetwork string
 	}
 )
 
@@ -144,23 +142,6 @@ func getEnvVarSysLogAddress(namespace string) string {
 	}
 
 	return address
-}
-
-func getEnvVarSysLogNetwork(namespace string) string {
-	prefix := defaultEnvironmentVariablePrefixSysLogNetwork
-	if namespace != "" {
-		prefix += "_"
-		namespace = strings.ToUpper(namespace)
-		namespace = strings.Replace(namespace, "-", "_", -1)
-		namespace = strings.Replace(namespace, ".", "_", -1)
-	}
-
-	network := os.Getenv(prefix + namespace)
-	if network == "" {
-		network = os.Getenv(defaultEnvironmentVariablePrefixSysLogNetwork)
-	}
-
-	return network
 }
 
 func setEnvironmentVariablePrefix(prefix string) error {
@@ -243,7 +224,6 @@ func Namespace(namespace string) *Logger {
 	}
 
 	if logger.Output == SysLog {
-		logger.SysLogNetwork = getEnvVarSysLogNetwork(namespace)
 		logger.SysLogAddress = getEnvVarSysLogAddress(namespace)
 	}
 
@@ -262,7 +242,7 @@ func (logger *Logger) AddHandler(handler Interface) {
 	if initHandler, ok := handler.(InitInterface); ok {
 		switch logger.Output {
 		case SysLog:
-			initHandler.InitSysLog(logger.Namespace, logger.SysLogNetwork, logger.SysLogAddress, logger.Level)
+			initHandler.InitSysLog(logger.Namespace, logger.SysLogAddress, logger.Level)
 		case StdOut:
 			initHandler.Init(logger.Namespace, logger.Level)
 		}
@@ -277,7 +257,7 @@ func (logger *Logger) SetLevel(level Level) {
 		if initHandler, ok := handler.(InitInterface); ok {
 			switch logger.Output {
 			case SysLog:
-				initHandler.InitSysLog(logger.Namespace, logger.SysLogNetwork, logger.SysLogAddress, logger.Level)
+				initHandler.InitSysLog(logger.Namespace, logger.SysLogAddress, logger.Level)
 			case StdOut:
 				initHandler.Init(logger.Namespace, logger.Level)
 			}
