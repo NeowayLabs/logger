@@ -14,9 +14,8 @@ var loggers = map[string]*Logger{}
 var loggersLock sync.Mutex
 
 // defaultEnvironmentVariablePrefix default environment variable prefix
-var defaultEnvironmentVariablePrefix = "SEVERINO_LOGGER"
+var defaultEnvironmentVariablePrefixLevel = "LOGGER_LEVEL"
 var defaultEnvironmentVariablePrefixOutput = "LOGGER_OUTPUT"
-var defaultEnvironmentVariablePrefixSysLogAddress = "LOGGER_SYSLOG_ADDRESS"
 
 const (
 	// LevelNone ...
@@ -35,10 +34,10 @@ const (
 	LevelDebug
 
 	// Output stdout
-	StdOut Output = iota
+	OutputStdOut Output = iota
 
 	// Output syslog
-	SysLog
+	OutputSysLog
 )
 
 type (
@@ -48,14 +47,10 @@ type (
 	// Output ...
 	Output uint
 
-	// Interface ...
-	Interface interface {
-	}
-
 	// InitInterface ...
-	InitInterface interface {
+	HandlerInterface interface {
 		Init(namespace string, level Level)
-		InitSysLog(namespace, address string, level Level)
+		SetLevel(level Level)
 	}
 
 	// DebugInterface ...
@@ -85,26 +80,24 @@ type (
 
 	// Logger ...
 	Logger struct {
-		Namespace     string
-		Level         Level
-		Handlers      []Interface
-		Output        Output
-		SysLogAddress string
+		Namespace string
+		Handlers  []interface{}
+		Level     Level
 	}
 )
 
 func getEnvVarLevel(namespace string) string {
-	prefix := defaultEnvironmentVariablePrefix
+	prefix := defaultEnvironmentVariablePrefixLevel
 	if namespace != "" {
-		prefix += "_"
 		namespace = strings.ToUpper(namespace)
 		namespace = strings.Replace(namespace, "-", "_", -1)
 		namespace = strings.Replace(namespace, ".", "_", -1)
+		prefix = namespace + "_" + prefix
 	}
 
-	level := os.Getenv(prefix + namespace)
+	level := os.Getenv(prefix)
 	if level == "" {
-		level = os.Getenv(defaultEnvironmentVariablePrefix)
+		level = os.Getenv(defaultEnvironmentVariablePrefixLevel)
 	}
 
 	return strings.ToLower(level)
@@ -112,36 +105,21 @@ func getEnvVarLevel(namespace string) string {
 
 func getEnvVarOutput(namespace string) string {
 	prefix := defaultEnvironmentVariablePrefixOutput
+
 	if namespace != "" {
-		prefix += "_"
 		namespace = strings.ToUpper(namespace)
 		namespace = strings.Replace(namespace, "-", "_", -1)
 		namespace = strings.Replace(namespace, ".", "_", -1)
+		prefix = namespace + "_" + prefix
 	}
 
-	output := os.Getenv(prefix + namespace)
-	if output == "" {
+	output := os.Getenv(prefix)
+
+	if strings.TrimSpace(output) == "" {
 		output = os.Getenv(defaultEnvironmentVariablePrefixOutput)
 	}
 
 	return output
-}
-
-func getEnvVarSysLogAddress(namespace string) string {
-	prefix := defaultEnvironmentVariablePrefixSysLogAddress
-	if namespace != "" {
-		prefix += "_"
-		namespace = strings.ToUpper(namespace)
-		namespace = strings.Replace(namespace, "-", "_", -1)
-		namespace = strings.Replace(namespace, ".", "_", -1)
-	}
-
-	address := os.Getenv(prefix + namespace)
-	if address == "" {
-		address = os.Getenv(defaultEnvironmentVariablePrefixSysLogAddress)
-	}
-
-	return address
 }
 
 func setEnvironmentVariablePrefix(prefix string) error {
@@ -155,7 +133,7 @@ func setEnvironmentVariablePrefix(prefix string) error {
 	}
 
 	delete(loggers, "")
-	defaultEnvironmentVariablePrefix = prefix
+	defaultEnvironmentVariablePrefixLevel = prefix
 
 	return nil
 }
@@ -170,7 +148,7 @@ func SetDefaultEnvironmentVariablePrefix(prefix string) error {
 }
 
 func GetDefaultEnvironmentVariablePrefix() string {
-	return defaultEnvironmentVariablePrefix
+	return defaultEnvironmentVariablePrefixLevel
 }
 
 // GetLevelByString ...
@@ -202,9 +180,9 @@ func GetOutputByString(envOutput string) Output {
 
 	switch envOutput {
 	case "SYSLOG":
-		return SysLog
+		return OutputSysLog
 	default:
-		return StdOut
+		return OutputStdOut
 	}
 }
 
@@ -220,15 +198,15 @@ func Namespace(namespace string) *Logger {
 
 	logger := &Logger{
 		Namespace: namespace,
-		Output:    GetOutputByString(getEnvVarOutput(namespace)),
+		Level:     GetLevelByString(getEnvVarLevel(namespace)),
 	}
 
-	if logger.Output == SysLog {
-		logger.SysLogAddress = getEnvVarSysLogAddress(namespace)
+	output := GetOutputByString(getEnvVarOutput(namespace))
+	if output == OutputSysLog {
+		logger.AddHandler(NewSysLogHandler(namespace))
+	} else {
+		logger.AddHandler(NewStdOutHandler(namespace))
 	}
-
-	logger.SetLevel(GetLevelByString(getEnvVarLevel(namespace)))
-	logger.AddHandler(&DefaultHandler{})
 
 	loggers[namespaceLower] = logger
 
@@ -236,16 +214,11 @@ func Namespace(namespace string) *Logger {
 }
 
 // AddHandler ...
-func (logger *Logger) AddHandler(handler Interface) {
+func (logger *Logger) AddHandler(handler interface{}) {
 	logger.Handlers = append(logger.Handlers, handler)
 
-	if initHandler, ok := handler.(InitInterface); ok {
-		switch logger.Output {
-		case SysLog:
-			initHandler.InitSysLog(logger.Namespace, logger.SysLogAddress, logger.Level)
-		case StdOut:
-			initHandler.Init(logger.Namespace, logger.Level)
-		}
+	if handlerInterface, ok := handler.(HandlerInterface); ok {
+		handlerInterface.Init(logger.Namespace, logger.Level)
 	}
 }
 
@@ -254,13 +227,8 @@ func (logger *Logger) SetLevel(level Level) {
 	logger.Level = level
 
 	for _, handler := range logger.Handlers {
-		if initHandler, ok := handler.(InitInterface); ok {
-			switch logger.Output {
-			case SysLog:
-				initHandler.InitSysLog(logger.Namespace, logger.SysLogAddress, logger.Level)
-			case StdOut:
-				initHandler.Init(logger.Namespace, logger.Level)
-			}
+		if handlerInterface, ok := handler.(HandlerInterface); ok {
+			handlerInterface.SetLevel(level)
 		}
 	}
 }
@@ -343,7 +311,7 @@ func (logger *Logger) Write(b []byte) (int, error) {
 }
 
 // AddHandler ...
-func AddHandler(handler Interface) {
+func AddHandler(handler interface{}) {
 	DefaultLogger.AddHandler(handler)
 }
 
