@@ -86,14 +86,18 @@ type (
 	}
 )
 
-func getEnvVarLevel(namespace string) string {
-	prefix := defaultEnvironmentVariablePrefixLevel
+func formatPrefix(namespace string, env string) string {
 	if namespace != "" {
 		namespace = strings.ToUpper(namespace)
 		namespace = strings.Replace(namespace, "-", "_", -1)
 		namespace = strings.Replace(namespace, ".", "_", -1)
-		prefix = namespace + "_" + prefix
+		return namespace + "_" + env
 	}
+	return env
+}
+
+func getEnvVarLevel(namespace string) string {
+	prefix := formatPrefix(namespace, defaultEnvironmentVariablePrefixLevel)
 
 	level := os.Getenv(prefix)
 	if level == "" {
@@ -104,14 +108,7 @@ func getEnvVarLevel(namespace string) string {
 }
 
 func getEnvVarOutput(namespace string) string {
-	prefix := defaultEnvironmentVariablePrefixOutput
-
-	if namespace != "" {
-		namespace = strings.ToUpper(namespace)
-		namespace = strings.Replace(namespace, "-", "_", -1)
-		namespace = strings.Replace(namespace, ".", "_", -1)
-		prefix = namespace + "_" + prefix
-	}
+	prefix := formatPrefix(namespace, defaultEnvironmentVariablePrefixOutput)
 
 	output := os.Getenv(prefix)
 
