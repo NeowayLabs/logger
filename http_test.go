@@ -11,11 +11,11 @@ func TestShouldChangeAllNamespacesLevel(t *testing.T) {
 	firstNamespace := Namespace("control")
 	secondNamespace := Namespace("module")
 
-    if firstNamespace.Level != 3 || secondNamespace.Level != 3 {
-        t.Fatal("Level should be Info, but got", firstNamespace.Level, secondNamespace.Level)
-    }
+	if firstNamespace.Level != 3 || secondNamespace.Level != 3 {
+		t.Fatal("Level should be Info, but got", firstNamespace.Level, secondNamespace.Level)
+	}
 
-    var jsonStr = []byte(`{"level":"debug"}`)
+	var jsonStr = []byte(`{"level":"debug"}`)
 	url := "http://testeurl.com/logger/all"
 
 	req, _ := http.NewRequest("PUT", url, bytes.NewBuffer(jsonStr))

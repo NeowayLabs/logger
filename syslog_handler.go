@@ -10,12 +10,15 @@ import (
 )
 
 var defaultEnvironmentVariablePrefixSysLogAddress = "LOGGER_SYSLOG_ADDRESS"
+var defaultEnvironmentVariablePrefixSysLogDir = "LOGGER_SYSLOG_DIR"
 
 // Logger provides support to write to log files.
 type SysLogHandler struct {
-	namespace    string
-	network      string
-	address      string
+	namespace string
+	network   string
+	address   string
+	dir       string
+
 	sysLogWriter *syslog.Writer
 
 	// Debug is for full detailed messages.
@@ -47,15 +50,21 @@ func NewSysLogHandler(namespace string) *SysLogHandler {
 		network = addressSplit[1]
 	}
 
+	syslogDir := getEnvVarSysLogDir(namespace)
+	if strings.TrimSpace(syslogDir) != "" {
+		syslogDir = syslogDir + "/"
+	}
+
 	return &SysLogHandler{
 		namespace: namespace,
 		network:   network,
 		address:   address,
+		dir:       syslogDir,
 	}
 }
 
 func (handler *SysLogHandler) Init(namespace string, level Level) {
-	handler.sysLogWriter = dial(handler.namespace, handler.network, handler.address, getPriority(level))
+	handler.sysLogWriter = dial(handler.dir, handler.namespace, handler.network, handler.address, getPriority(level))
 
 	handler.turnOnLogging(namespace, level, handler.sysLogWriter)
 }
@@ -65,13 +74,13 @@ func (handler *SysLogHandler) SetLevel(level Level) {
 		handler.sysLogWriter.Close()
 	}
 
-	handler.sysLogWriter = dial(handler.namespace, handler.network, handler.address, getPriority(level))
+	handler.sysLogWriter = dial(handler.dir, handler.namespace, handler.network, handler.address, getPriority(level))
 
 	handler.turnOnLogging(handler.namespace, level, handler.sysLogWriter)
 }
 
-func dial(namespace, network, address string, priority syslog.Priority) *syslog.Writer {
-	sysLogWriter, err := syslog.Dial(network, address, priority, namespace)
+func dial(dir, namespace, network, address string, priority syslog.Priority) *syslog.Writer {
+	sysLogWriter, err := syslog.Dial(network, address, priority, dir+namespace)
 	if err != nil {
 		log.Fatalf("Error on syslog.Dial(%s, %s, %s, %s)\n", network, address, priority, namespace)
 	}
@@ -94,19 +103,22 @@ func getPriority(level Level) syslog.Priority {
 }
 
 func getEnvVarSysLogAddress(namespace string) string {
-	prefix := defaultEnvironmentVariablePrefixSysLogAddress
-
-	if namespace != "" {
-		namespace = strings.ToUpper(namespace)
-		namespace = strings.Replace(namespace, "-", "_", -1)
-		namespace = strings.Replace(namespace, ".", "_", -1)
-		prefix = namespace + "_" + prefix
-
-	}
+	prefix := formatPrefix(namespace, defaultEnvironmentVariablePrefixSysLogAddress)
 
 	address := os.Getenv(prefix)
 	if address == "" {
 		address = os.Getenv(defaultEnvironmentVariablePrefixSysLogAddress)
+	}
+
+	return address
+}
+
+func getEnvVarSysLogDir(namespace string) string {
+	prefix := formatPrefix(namespace, defaultEnvironmentVariablePrefixSysLogDir)
+
+	address := os.Getenv(prefix)
+	if address == "" {
+		address = os.Getenv(defaultEnvironmentVariablePrefixSysLogDir)
 	}
 
 	return address
